@@ -8,6 +8,7 @@
 #include <string>
 #include <bits/stdc++.h>
 #include <math.h>
+
 ///PCL
 #include <pcl/point_types.h>
 #include <pcl/io/io.h>
@@ -32,6 +33,16 @@
 #include <pcl/features/moment_of_inertia_estimation.h>
 #include <pcl/common/transforms.h>
 #include <fstream>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/filters/project_inliers.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/surface/concave_hull.h>
+#include <pcl/features/moment_of_inertia_estimation.h>
 
 ///
 #include <pcl/sample_consensus/method_types.h>
@@ -62,7 +73,59 @@
 */
 
 using namespace std;
-class CDD
+
+class Planes
+{
+
+  private:
+    double min_x,max_x,min_y,max_y,min_z,max_z;
+    double a,b,c,d;
+    string name;
+  public:
+
+    static int plane_number ;
+    // getter methods
+    //plane coeffcients getter methods
+    double getA();
+    double getB();
+    double getC();
+    double getD();
+    //bounding box min-max getter methods
+    double getMinX();
+    double getMaxX();
+    double getMinY();
+    double getMaxY();
+    double getMinZ();
+    double getMaxZ();
+
+    //plane name getter method
+    string getName();
+
+    // setter methods
+    //plane coeffcients setter methods
+    void setA(double);
+    void setB(double);
+    void setC(double);
+    void setD(double);
+    //bounding box min-max setter methods
+    void setMinX(double);
+    void setMaxX(double);
+    void setMinY(double);
+    void setMaxY(double);
+    void setMinZ(double);
+    void setMaxZ(double);
+    // print data 
+    void printPlane();
+    // contructor
+    Planes(double, double, double, double,double, double, double, double,double, double );
+    //destructor
+    ~Planes();
+    double operator-( Planes&  x);
+   
+};
+
+
+class CDD 
 {
 public:
     CDD(boost::shared_ptr<pcl::visualization::PCLVisualizer>);
@@ -71,18 +134,18 @@ public:
     int samplenumber;
     ///stringstreams
     std::stringstream sn;
-    std::stringstream cn;
-    std::stringstream ssv;
-    std::stringstream sstc;
+    std::stringstream key;
     int ground;
     vector<int>frames;
     int door;
+    vector<int>doors;
     vector<int>walls;
     ///vectors
     std::vector<int> inliers;
     vector<double>x;
-    vector<vector<double>> clusterVector;
-    vector<vector<double>> coefficientsVector;
+    //vector<vector<double>> clusterVector;
+    //vector<vector<double>> coefficientsVector;
+    vector<Planes> p;
     vector<double>coordinateVector;
     std::vector <pcl::PointIndices> cluster_indices;
     ///functions
@@ -97,7 +160,9 @@ public:
     void writerPCD();
     void boundingBoxPrint();
     void decision();
-    void boundingBox(pcl::PointCloud<pcl::PointXYZ>::Ptr );
+    void boundingBox(pcl::PointCloud<pcl::PointXYZ>::Ptr ,pcl::PointXYZ &,pcl::PointXYZ &);
+    void whatHappened();
+    void clustersMinMax(void);
     
 private:
     ///clouds
@@ -111,4 +176,7 @@ private:
     pcl::IndicesPtr indices;
     
 };
+
+
+
 #endif
