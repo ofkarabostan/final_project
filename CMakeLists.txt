@@ -13,5 +13,6 @@ add_executable (
 	CDD_client 
 	CDD_client.cpp
 	CDD.cpp
+	PLANES.cpp
 )
 target_link_libraries (CDD_client ${PCL_LIBRARIES})

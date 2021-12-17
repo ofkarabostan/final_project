@@ -14,70 +14,6 @@
 
 using namespace std;
 
-// getter methods
-//plane coeffcients getter methods
-double Planes::getA(){ return this->a;}
-double Planes::getB(){ return this->b;}
-double Planes::getC(){ return this->c;}
-double Planes::getD(){ return this->d;}
-//bounding box min-max getter methods
-double Planes::getMinX(){ return this->min_x;}
-double Planes::getMaxX(){ return this->max_x;}
-double Planes::getMinY(){ return this->min_y;}
-double Planes::getMaxY(){ return this->max_y;}
-double Planes::getMinZ(){ return this->min_z;}
-double Planes::getMaxZ(){ return this->max_z;}
-//plane name getter method
-string Planes::getName(){ return this->name;}
-
-// setter methods
-//plane coeffcients setter methods
-void Planes::setA(double a){ this->a=a;}
-void Planes::setB(double b){ this->b=b;}
-void Planes::setC(double c){ this->c=c;}
-void Planes::setD(double d){ this->d=d;}
-//bounding box min-max setter methods
-void Planes::setMinX(double min_x){ this->min_x=min_x;}
-void Planes::setMaxX(double max_x){ this->max_x=max_x;}
-void Planes::setMinY(double min_y){ this->min_y=min_y;}
-void Planes::setMaxY(double max_y){ this->max_y=max_y;}
-void Planes::setMinZ(double min_z){ this->min_z=min_z;}
-void Planes::setMaxZ(double max_z){ this->max_z=max_z;}// print data 
-void Planes::printPlane(){
-  std:: cout<< plane_number <<". plane is "<<"("<<setw(12)<< this->a<<")" << "x " 
-                                               <<"("<<setw(12)<< this->b <<")"<< "y " 
-                                               <<"("<<setw(12)<< this->c <<")"<< "z " 
-                                               <<"("<<setw(12)<< this->d <<")"<< " = 0 " 
-                                              <<" min_x= "<<setw(12)<<min_x<<" max_x= "<<setw(12)<<max_x
-                                              <<" min_y= "<<setw(12)<<min_y<<" max_y= "<<setw(12)<<max_y
-                                              <<" min_z= "<<setw(12)<<min_z<<" max_z= "<<setw(12)<<max_z<<endl;
-}
-// contructor
-Planes::Planes(double a, double b, double c, double d,double min_x,double max_x,double min_y,double max_y,double min_z,double max_z) 
-: a(a), b(b), c(c), d(d),min_x(min_x),max_x(max_x),min_y(min_y),max_y(max_y),min_z(min_z),max_z(max_z)
-{
-  
-  
-  std::stringstream sn;
-  sn << "plane" << plane_number;
-  name = sn.str();
-  this->printPlane();
-  plane_number++;
-
-}
-// destructor
-Planes::~Planes()
-{
-}
-
-double Planes::operator-( Planes&  x){
-      double nom = abs(x.getA()*(-(*this).getD()/(*this).getA())+x.getD());
-      double denom = sqrt(pow(x.getA(),2)+pow(x.getB(),2)+pow(x.getC(),2));
-      return nom/denom; 
-    }
-
-int Planes::plane_number=1;
-
 ///Constructor
 CDD::CDD(boost::shared_ptr<pcl::visualization::PCLVisualizer> v)
 :viewer(v)
@@ -97,8 +33,8 @@ void CDD::removingNans()
 
 void CDD::getSample()
 {
-  int pcdnum;
-  std::cout<< "Enter the Condition" << std::endl;
+  int pcdnum=1;
+  //std::cout<< "Enter the Condition" << std::endl;
   std::cout<< "************************************" << std::endl;
   std::cout<< "1---Orange   (   1 - 130 )" << std::endl;
   std::cout<< "2---Red      ( 131 - 396 )" << std::endl;
@@ -106,7 +42,7 @@ void CDD::getSample()
   std::cout<< "4---Yellow   ( 958 - 1223)" << std::endl;
   std::cout<< "5---Blue     (1224 - 1353)" << std::endl;
   std::cout<< "************************************" << std::endl;
-  std::cin >> pcdnum;
+  //std::cin >> pcdnum;
   std::cout<< "Enter the Sample Number" << std::endl;
   std::cin >> samplenumber;
   key<<"/home/omer/Desktop/CDD/";
@@ -132,8 +68,7 @@ void CDD::readPCD()
 	{
 		std::cout << "Cloud reading failed." << std::endl;
 	}
-  
-  //transform the point cloud in order to change its coordinate system    
+  //transform the point cloud in order to change its coordinate system
 
   Eigen::Affine3f transform = Eigen::Affine3f::Identity();
   transform.rotate (Eigen::AngleAxisf (gazeboAngle+M_PI/2, Eigen::Vector3f::UnitZ()) );
@@ -143,6 +78,16 @@ void CDD::readPCD()
   tempss <<key.str()<< "fromTransform/transform_"<< samplenumber << ".pcd";
   writer.write<pcl::PointXYZ> (tempss.str(), *cloud_transformed, false);
   tempss.clear();
+/*
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pass.setInputCloud (cloud_filtered);
+  pass.setFilterFieldName ("x");
+  pass.setFilterLimits (0.7, 8);
+  pass.filter (*cloud_transformed);
+  std::stringstream tempss2;
+  tempss2 <<key.str()<< "fromTransform/filtered_"<< samplenumber << ".pcd";
+  writer.write<pcl::PointXYZ> (tempss2.str(), *cloud_transformed, false);
+*/
 }
 
 void CDD::showPointCloud()
@@ -279,44 +224,64 @@ void CDD::decision(void)
       cout<<p[i].getName() <<" is a frame"<<endl;
     }
   }
+
+  
   
 
-if(wall.size()<3)
-{
-  cout<<"There is no door!"<<endl;
-}
+  if(wall.size()>=3)
+  {
+    if ((abs(wall[1].getMaxX()-wall[2].getMinX())<0.02 || abs(wall[1].getMinX()-wall[2].getMaxX())<0.02) &&
+      ( (abs(wall[1].getMaxY()-wall[2].getMinY())<1.2 && abs(wall[1].getMaxY()-wall[2].getMinY())>0.8)||
+        (abs(wall[2].getMaxY()-wall[1].getMinY())<1.2 && abs(wall[2].getMaxY()-wall[1].getMinY())>0.8)) &&
+        (abs(wall[0].getMaxX()-wall[1].getMinX())>0.08|| abs(wall[0]-wall[2])>0.08 )
+    )
+    {
+      cout<<wall[1].getName()<<" is a wall"<<endl;
+      cout<<wall[2].getName()<<" is a wall"<<endl;
+      cout<<wall[0].getName()<<" is the door"<<endl;
+    }
+    else if ((abs(wall[0].getMaxX()-wall[1].getMinX())<0.02 || abs(wall[0].getMinX()-wall[1].getMaxX())<0.02) &&
+      ( (abs(wall[0].getMaxY()-wall[1].getMinY())<1.2 && abs(wall[0].getMaxY()-wall[1].getMinY())>0.8)||
+        (abs(wall[1].getMaxY()-wall[0].getMinY())<1.2 && abs(wall[1].getMaxY()-wall[0].getMinY())>0.8)) &&
+        (abs(wall[2].getMaxX()-wall[0].getMinX())>0.08|| abs(wall[0]-wall[2])>0.08 )
+    )
+    {
+      cout<<wall[0].getName()<<" is a wall"<<endl;
+      cout<<wall[1].getName()<<" is a wall"<<endl;
+      cout<<wall[2].getName()<<" is the door"<<endl;
+    }
+    else if ((abs(wall[0].getMaxX()-wall[2].getMinX())<0.02 || abs(wall[0].getMinX()-wall[2].getMaxX())<0.02) &&
+      ( (abs(wall[0].getMaxY()-wall[2].getMinY())<1.2 && abs(wall[0].getMaxY()-wall[2].getMinY())>0.8)||
+        (abs(wall[2].getMaxY()-wall[0].getMinY())<1.2 && abs(wall[2].getMaxY()-wall[0].getMinY())>0.8)) &&
+        (abs(wall[0].getMaxX()-wall[1].getMinX())>0.08|| abs(wall[1]-wall[2])>0.08 )
+    )
+    {
+      cout<<wall[0].getName()<<" is a wall"<<endl;
+      cout<<wall[2].getName()<<" is a wall"<<endl;
+      cout<<wall[1].getName()<<" is the door"<<endl;
+    }
+  }
+
+  else if(wall.size()==2)
+  {
+    if(wall[0].getMaxX()-wall[1].getMinX()>0.08 && abs(wall[1]-wall[0])>0.08 ) 
+    
+    {
+      cout<<wall[1].getName()<<" is a wall"<<endl;
+      cout<<wall[0].getName()<<" is the door"<<endl;
+    
+    }
+    else if(wall[1].getMaxX()-wall[0].getMinX()>0.08 && abs(wall[1]-wall[0])>0.08 )
+    {
+      cout<<wall[0].getName()<<" is a wall"<<endl;
+      cout<<wall[1].getName()<<" is the door"<<endl;
+    }
 
 
-else if ((abs(wall[1].getMaxX()-wall[2].getMinX()<0.02) || abs(wall[1].getMinX()-wall[2].getMaxX()<0.02)) &&
-   ( (abs(wall[1].getMaxY()-wall[2].getMinY())<1.0 && abs(wall[1].getMaxY()-wall[2].getMinY())>0.8)||
-     (abs(wall[2].getMaxY()-wall[1].getMinY())<1.0 && abs(wall[2].getMaxY()-wall[1].getMinY())>0.8)) &&
-     (abs(wall[0].getMaxX()-wall[1].getMinX())>0.09|| abs(wall[0]-wall[2])>0.09 )
-)
-{
-  cout<<wall[1].getName()<<" is a wall"<<endl;
-  cout<<wall[2].getName()<<" is a wall"<<endl;
-  cout<<wall[0].getName()<<" is the door"<<endl;
-}
-else if ((abs(wall[0].getMaxX()-wall[1].getMinX()<0.02) || abs(wall[0].getMinX()-wall[1].getMaxX()<0.02)) &&
-   ( (abs(wall[0].getMaxY()-wall[1].getMinY())<1.0 && abs(wall[0].getMaxY()-wall[1].getMinY())>0.8)||
-     (abs(wall[1].getMaxY()-wall[0].getMinY())<1.0 && abs(wall[1].getMaxY()-wall[0].getMinY())>0.8)) &&
-     (abs(wall[2].getMaxX()-wall[0].getMinX())>0.09|| abs(wall[0]-wall[2])>0.09 )
-)
-{
-  cout<<wall[0].getName()<<" is a wall"<<endl;
-  cout<<wall[1].getName()<<" is a wall"<<endl;
-  cout<<wall[2].getName()<<" is the door"<<endl;
-}
-else if ((abs(wall[0].getMaxX()-wall[2].getMinX()<0.02) || abs(wall[0].getMinX()-wall[2].getMaxX()<0.02)) &&
-   ( (abs(wall[0].getMaxY()-wall[2].getMinY())<1.0 && abs(wall[0].getMaxY()-wall[2].getMinY())>0.8)||
-     (abs(wall[2].getMaxY()-wall[0].getMinY())<1.0 && abs(wall[2].getMaxY()-wall[0].getMinY())>0.8)) &&
-     (abs(wall[0].getMaxX()-wall[1].getMinX())>0.09|| abs(wall[1]-wall[2])>0.09 )
-)
-{
-  cout<<wall[0].getName()<<" is a wall"<<endl;
-  cout<<wall[2].getName()<<" is a wall"<<endl;
-  cout<<wall[1].getName()<<" is the door"<<endl;
-}
+  }
+  else{
+    cout<<"There is no door!"<<endl;
+  }
 
 
 }
